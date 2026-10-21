@@ -6,22 +6,28 @@ Full rules: [docs/RULES.md](docs/RULES.md)
 
 ## Play
 
-Open `index.html` in any modern browser. It is a single self-contained file with no build step and no server.
+Live: https://romaniandraughts.magicobject.workers.dev/
+
+Locally, open `public/index.html` in any modern browser (self-contained, no server needed), or run it exactly as production serves it, with its security headers, using `npx wrangler dev`.
 
 ## Layout
 
 | Path | What it is |
 | --- | --- |
-| `index.html` | The playable game (engine inlined into the page) |
+| `public/index.html` | The playable game (engine inlined into the page). Generated |
+| `public/_headers` | Security headers and CSP, with script hashes filled in. Generated |
+| `public/404.html` | The not-found page |
+| `wrangler.jsonc` | Cloudflare Worker config (static assets from `public/`) |
+| `src/_headers.template` | Source of `public/_headers` |
 | `src/engine.js` | Rules engine and computer opponent; works in the browser and Node |
 | `src/page.template.html` | The page source, with `/*@ENGINE@*/` where the engine is inlined |
 | `test/*.test.js` | Rule, computer-opponent and build tests (`npm test`) |
 | `docs/RULES.md` | The rules |
 
-## Rebuild `index.html` after editing
+## Rebuild `public/` after editing
 
 ```sh
-node build.js
+npm run build
 ```
 
 ## Test

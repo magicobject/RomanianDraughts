@@ -1,5 +1,8 @@
 # Changelog
 
+## build-2026.10.21.003 (21 Oct 2026, Greg Wright)
+Added the Cloudflare Worker config. [wrangler.jsonc](wrangler.jsonc) serves only `public/` (worker name `romaniandraughts`, `not_found_handling: "404-page"`). The build now writes `public/index.html` and [public/_headers](public/_headers) (CSP with a hash for each inline script, plus nosniff, frame, referrer, permissions and HSTS headers) and there is a [public/404.html](public/404.html). The old root `index.html` is gone. Tests grew to 69, covering the CSP hashes, the config and the 404 guard. Checked under `wrangler dev`: correct headers, custom 404, no CSP errors in the console (only a missing favicon).
+
 ## build-2026.10.21.002 (21 Oct 2026, Greg Wright)
 Added the branch-and-PR workflow: [claude-pr-automerge.yml](.github/workflows/claude-pr-automerge.yml) re-runs the tests and audit on every `claude/*` PR, set to the cautious `careful` level so only green `risk:simple` PRs merge themselves. Documented in [CLAUDE.md](CLAUDE.md).
 
