@@ -1,0 +1,181 @@
+# Same merge-actor mechanism as every other managed repo's claude-pr-automerge.yml (copied from
+# mediawright-ops). Built without actions/checkout, actions/setup-node or actions/cache, so there
+# are no third-party Actions to pin or keep patched: the PR head is checked out with the git/gh
+# CLIs on the runner, and the runner's own Node is used. This repo is small, so a cold npm ci is cheap.
+#
+# AUTO_MERGE_LEVEL (repo variable, Settings -> Actions -> Variables; unset is treated as
+# "never", so an unconfigured repo fails safe):
+#   always   - merge once the gate is green. No risk judgement.
+#   standard - simple tier merges once green; complex tier needs an explicit human approval
+#              on top of a green gate; gnarly tier never auto-merges.
+#   careful  - only a green-gated SIMPLE-tier PR auto-merges; anything else holds for Greg.
+#   never    - always holds for Greg, whatever the gate says.
+#
+# Risk tier comes from a label Claude applies when opening the PR: risk:simple, risk:complex
+# or risk:gnarly (missing/unrecognised defaults to complex, not simple — fail safe). Dependabot
+# PRs carry no such label, so the tier is derived from the version bump itself: patch/minor is
+# simple, major is complex; gnarly is never inferred for a Dependabot PR, only applied by hand.
+#
+# Only applies to this same repository's own claude/* or dependabot/* branches — a PR from
+# anywhere else (an external fork, anyone else's branch) is untouched by this workflow.
+
+name: Auto-merge Claude Code PRs
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: claude-pr-automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    if: startsWith(github.event.pull_request.head.ref, 'claude/') || startsWith(github.event.pull_request.head.ref, 'dependabot/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the PR head (no action)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git -c http.extraHeader="AUTHORIZATION: bearer ${GH_TOKEN}" clone "https://github.com/${REPO}.git" .
+          git checkout "$PR_SHA"
+
+      - name: Run this repo's test gate
+        id: tests
+        continue-on-error: true
+        run: npm ci && npm test
+
+      - name: Run this repo's security audit
+        id: audit
+        continue-on-error: true
+        run: npm run audit
+
+      - name: Work out this repo's auto-merge level
+        id: level
+        env:
+          RAW_LEVEL: ${{ vars.AUTO_MERGE_LEVEL }}
+        run: |
+          level="$RAW_LEVEL"
+          case "$level" in
+            always|standard|careful|never) ;;
+            *) level="never" ;;
+          esac
+          echo "level=$level" >> "$GITHUB_OUTPUT"
+
+      - name: Work out this PR's risk tier
+        id: tier
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [[ "$HEAD_REF" == dependabot/* ]]; then
+            title=$(gh pr view "$PR_NUMBER" --json title -q '.title')
+            # Dependabot's own title shape: "Bump <name> from <old> to <new>".
+            old_major=$(echo "$title" | grep -oP 'from \K[0-9]+' | head -1 || true)
+            new_major=$(echo "$title" | grep -oP 'to \K[0-9]+' | head -1 || true)
+            if [[ -n "$old_major" && -n "$new_major" && "$old_major" == "$new_major" ]]; then
+              tier=simple
+            else
+              tier=complex
+            fi
+          else
+            labels=$(gh pr view "$PR_NUMBER" --json labels -q '.labels[].name')
+            if grep -qx 'risk:simple' <<<"$labels"; then
+              tier=simple
+            elif grep -qx 'risk:gnarly' <<<"$labels"; then
+              tier=gnarly
+            else
+              tier=complex
+            fi
+          fi
+          echo "tier=$tier" >> "$GITHUB_OUTPUT"
+
+      - name: Check for a human approval
+        id: approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          approved=$(gh pr view "$PR_NUMBER" --json reviews \
+            -q '[.reviews[] | select(.state == "APPROVED" and .author.login != "github-actions")] | length > 0')
+          echo "approved=$approved" >> "$GITHUB_OUTPUT"
+
+      - name: Decide merge, hold, or ask Greg
+        id: decide
+        env:
+          LEVEL: ${{ steps.level.outputs.level }}
+          TIER: ${{ steps.tier.outputs.tier }}
+          APPROVED: ${{ steps.approval.outputs.approved }}
+          TESTS_OUTCOME: ${{ steps.tests.outcome }}
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        run: |
+          action=hold
+          if [[ "$TESTS_OUTCOME" == "success" && "$AUDIT_OUTCOME" == "success" ]]; then
+            gate_ok=true
+          else
+            gate_ok=false
+          fi
+          reason="level: $LEVEL, tier: $TIER, tests: $TESTS_OUTCOME, audit: $AUDIT_OUTCOME"
+          if [[ "$gate_ok" == "true" ]]; then
+            case "$LEVEL" in
+              always) action=merge ;;
+              standard)
+                if [[ "$TIER" == "simple" ]]; then
+                  action=merge
+                elif [[ "$TIER" == "complex" && "$APPROVED" == "true" ]]; then
+                  action=merge
+                else
+                  reason="$reason, approved: $APPROVED"
+                fi
+                ;;
+              careful)
+                if [[ "$TIER" == "simple" ]]; then action=merge; fi
+                ;;
+              never) ;;
+            esac
+          fi
+          echo "action=$action" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+
+      - name: Merge and delete the branch if the decision says so
+        if: steps.decide.outputs.action == 'merge'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr merge --squash --delete-branch "$PR_NUMBER"
+
+      - name: Leave a note if held for review
+        if: steps.decide.outputs.action != 'merge' && steps.tier.outputs.tier != 'gnarly'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REASON: ${{ steps.decide.outputs.reason }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body "Held for review — $REASON. See this run's logs for the specific reason. Left open rather than merged, closed or deleted."
+
+      # Gnarly never auto-merges regardless of gate or level, and always asks Greg by name — a
+      # plain PR comment doesn't notify him of his own account's activity, but an @-mention
+      # from github-actions[bot] does (same trick as siteadmin's notify-auto-fix-pr.yml).
+      - name: Ask Greg, for a gnarly change
+        if: steps.tier.outputs.tier == 'gnarly'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REASON: ${{ steps.decide.outputs.reason }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body "@magicobject this PR is tagged gnarly and needs your own look before it merges, whatever the gate says ($REASON). See the PR description for the overview and why it was referred."

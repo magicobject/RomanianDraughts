@@ -24,3 +24,9 @@ An online Romanian Draughts game (8 kings a side, own-piece jumps allowed, captu
 - The server is authoritative: validate every move with `RD.allMoves`, never trust the client.
 - No third-party script/font/embed without adding exactly what it needs to the CSP in `_headers` and checking with `npx wrangler dev`.
 - Keep `.gitattributes` pinning text to LF.
+
+## Branch and PR workflow
+- Never commit to `main` directly. Work on a `claude/*` branch and open a PR.
+- `.github/workflows/claude-pr-automerge.yml` re-runs `npm test` and `npm run audit` on the PR head. `AUTO_MERGE_LEVEL` is `careful`: only a green PR labelled `risk:simple` merges itself; everything else waits for Greg.
+- Label every PR `risk:simple` (docs, changelog, tests-only, single concern), `risk:complex` or `risk:gnarly` (never auto-merges; Greg is asked by name). Unlabelled counts as complex.
+- Tags (`build-<date>.<NNN>`) are pushed after the merge, on the merge commit.
