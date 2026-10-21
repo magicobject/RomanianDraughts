@@ -1,0 +1,49 @@
+# Romanian Draughts
+
+A browser game of Romanian Draughts: an all-kings draughts variant, 8 kings a side, where pieces may jump their own men as well as the opponent's and captures are optional. Play two players on one screen, or against the computer (easy, medium, hard).
+
+Full rules: [docs/RULES.md](docs/RULES.md)
+
+## Play
+
+Open `index.html` in any modern browser. It is a single self-contained file with no build step and no server.
+
+## Layout
+
+| Path | What it is |
+| --- | --- |
+| `index.html` | The playable game (engine inlined into the page) |
+| `src/engine.js` | Rules engine and computer opponent; works in the browser and Node |
+| `src/page.template.html` | The page source, with `/*@ENGINE@*/` where the engine is inlined |
+| `test/engine.test.js` | Rule tests, AI timing and a self-play game |
+| `docs/RULES.md` | The rules |
+
+## Rebuild `index.html` after editing
+
+```sh
+node build.js
+```
+
+## Test
+
+```sh
+node test/engine.test.js
+```
+
+## Engine API (`RD`)
+
+- `initialBoard()` → `Int8Array(64)`, index `row*8+col`; `1` = Dark (rows 6–7, moves first), `-1` = Light, `0` = empty.
+- `allMoves(board, side)` → `[{ path: [from, ..., to], caps: [squares] }]`, every step and every jump chain including stops part-way.
+- `applyMove(board, move)` → new board.
+- `winnerAfter(board, mover)` → winning side or `0`.
+- `chooseMove(board, side, 'easy'|'medium'|'hard')` → computer move (iterative-deepening alpha-beta with a time limit).
+
+## Rule decisions in the code
+
+- Captured pieces stay on the board until the turn ends and cannot be jumped twice.
+- A jump chain may not land on the same square twice.
+- The moving piece's starting square counts as empty during its own chain.
+
+## Ideas
+
+- Online play between two people (shared game state or a small server).
