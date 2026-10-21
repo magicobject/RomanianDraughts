@@ -1,0 +1,5 @@
+#!/bin/sh
+# Run the full test suite and the dependency audit before anything is pushed.
+set -e
+npm test
+npm run audit

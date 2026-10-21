@@ -15,7 +15,7 @@ Open `index.html` in any modern browser. It is a single self-contained file with
 | `index.html` | The playable game (engine inlined into the page) |
 | `src/engine.js` | Rules engine and computer opponent; works in the browser and Node |
 | `src/page.template.html` | The page source, with `/*@ENGINE@*/` where the engine is inlined |
-| `test/engine.test.js` | Rule tests, AI timing and a self-play game |
+| `test/*.test.js` | Rule, computer-opponent and build tests (`npm test`) |
 | `docs/RULES.md` | The rules |
 
 ## Rebuild `index.html` after editing
@@ -27,7 +27,7 @@ node build.js
 ## Test
 
 ```sh
-node test/engine.test.js
+npm test
 ```
 
 ## Engine API (`RD`)

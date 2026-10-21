@@ -1,0 +1,12 @@
+{
+  "name": "romanian-draughts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Romanian Draughts online game",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test \"test/*.test.js\"",
+    "audit": "npm audit --audit-level=high",
+    "prepare": "git config core.hooksPath .githooks"
+  }
+}
