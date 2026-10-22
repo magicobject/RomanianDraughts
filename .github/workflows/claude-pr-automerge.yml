@@ -49,7 +49,10 @@ jobs:
           PR_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          git -c http.extraHeader="AUTHORIZATION: bearer ${GH_TOKEN}" clone "https://github.com/${REPO}.git" .
+          # git over HTTPS needs Basic auth (x-access-token), as actions/checkout sends; "bearer" is rejected.
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          echo "::add-mask::${auth}"
+          git -c http.extraHeader="AUTHORIZATION: basic ${auth}" clone "https://github.com/${REPO}.git" .
           git checkout "$PR_SHA"
 
       - name: Run this repo's test gate
