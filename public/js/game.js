@@ -26,14 +26,44 @@
   // ---------- Board rendering ----------
   const boardEl = $('board');
   const cells = [];
+  let focusI = -1;  // the board's one Tab stop (roving tabindex); a board index, so it survives the board being flipped
+  let wantCol = 0;  // screen column that Up/Down try to stay near
   for (let k = 0; k < 64; k++) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'sq';
     btn.addEventListener('click', () => onSquare(Number(btn.dataset.i)));
+    btn.addEventListener('focus', () => { focusI = Number(btn.dataset.i); wantCol = k & 7; updateRoving(); });
     boardEl.appendChild(btn);
     cells.push(btn);
   }
+
+  const isDark = i => (((i >> 3) + (i & 7)) & 1) === 1;
+  function updateRoving() { cells.forEach(c => { c.tabIndex = c.classList.contains('dark') && Number(c.dataset.i) === focusI ? 0 : -1; }); }
+
+  // Arrow keys move between the 32 playable squares in screen terms (so the flipped board works): Left/Right along the row, Up/Down
+  // to the nearest playable square in the next row (staying near the column you were in), Home/End to the ends of the row.
+  boardEl.addEventListener('keydown', e => {
+    const k0 = cells.indexOf(document.activeElement);
+    if (k0 < 0 || e.altKey || e.ctrlKey || e.metaKey) return;
+    const r = k0 >> 3, c = k0 & 7;
+    let nr = r, nc = c;
+    if (e.key === 'ArrowLeft') nc = c - 2;
+    else if (e.key === 'ArrowRight') nc = c + 2;
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      nr = r + (e.key === 'ArrowUp' ? -1 : 1);
+      if (nr < 0 || nr > 7) return void e.preventDefault();
+      nc = (nr + wantCol) % 2 === 1 ? wantCol : wantCol + 1; // wantCol is a light square in that row: take the dark one to its right...
+      if (nc > 7) nc = wantCol - 1;                          // ...or to its left at the edge
+    } else if (e.key === 'Home') nc = (r & 1) ? 0 : 1;
+    else if (e.key === 'End') nc = (r & 1) ? 6 : 7;
+    else return;
+    e.preventDefault();
+    if (nc < 0 || nc > 7) return;
+    const keep = e.key === 'ArrowUp' || e.key === 'ArrowDown' ? wantCol : null;
+    cells[nr * 8 + nc].focus();
+    if (keep !== null) wantCol = keep;
+  });
 
   function pieceEl(p, extra) {
     const d = document.createElement('span');
@@ -64,6 +94,9 @@
     }
     const tg = anim ? [] : targets();
     const yourTurn = !busy && !S.winner && !isAITurn();
+    const hadFocus = boardEl.contains(document.activeElement);
+    if (focusI < 0) focusI = S.board.findIndex((p, i) => p === S.side && isDark(i));
+    if (focusI < 0) focusI = 1;
 
     for (let k = 0; k < 64; k++) {
       const i = fl ? 63 - k : k;
@@ -71,8 +104,10 @@
       btn.dataset.i = i;
       const dark = (r + c) % 2 === 1;
       btn.className = 'sq' + (dark ? ' dark' : '') + (S.last && !sel && !anim && S.last.includes(i) ? ' last' : '');
-      btn.disabled = !dark || !yourTurn;
-      btn.tabIndex = dark ? 0 : -1;
+      // Light squares are never playable. Playable squares are never `disabled` (that would drop keyboard focus): aria-disabled marks them unavailable instead, and onSquare ignores them.
+      btn.disabled = !dark;
+      if (dark && !yourTurn) btn.setAttribute('aria-disabled', 'true'); else btn.removeAttribute('aria-disabled');
+      btn.tabIndex = dark && i === focusI ? 0 : -1;
       btn.innerHTML = '';
       const p = disp[i];
       let label = sqName(i);
@@ -90,6 +125,7 @@
       if (dark) { btn.setAttribute('aria-label', label); btn.removeAttribute('aria-hidden'); }
       else { btn.removeAttribute('aria-label'); btn.setAttribute('aria-hidden', 'true'); } // unplayable squares are not announced
     }
+    if (hadFocus) cells[fl ? 63 - focusI : focusI].focus(); // the board may have flipped under the focused square
 
     // status
     const st = $('status'), hint = $('hint');
@@ -171,7 +207,7 @@
   }
 
   function onSquare(i) {
-    if (busy || S.winner || isAITurn()) return;
+    if (busy || S.winner || isAITurn() || !isDark(i)) return;
     const b = B();
     if (!sel) {
       if (b[i] === S.side) { sel = { from: i, cur: i, path: [i], caps: [] }; render(); }
