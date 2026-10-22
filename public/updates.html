@@ -18,7 +18,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
-<link rel="stylesheet" href="/css/style.css?v=1110a989e4">
+<link rel="stylesheet" href="/css/style.css?v=a768a905fd">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -30,8 +30,14 @@
 <main id="main" class="doc">
   <h1>Site updates</h1>
   <p class="lede">Every build of this site and what changed, newest first. This page is not linked from the game and is kept out of search engines.</p>
-  <p class="build-number">Current build: 2026.10.22.002</p>
+  <p class="build-number">Current build: 2026.10.22.003</p>
   <ul class="changelog">
+    <li>
+      <div class="changelog-meta"><span class="changelog-build">2026.10.22.003</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">22 Oct 2026</span></div>
+      <p>Made the board properly usable from the keyboard. Before, all 32 playable squares were separate Tab stops (about 25 presses to reach your first piece), there were no arrow keys, and against the computer every square was switched off while it thought, so keyboard and screen-reader users lost their place after every move.</p>
+      <p><strong>Now:</strong> the board is a single Tab stop. Arrow keys move between the playable squares (Left and Right along a row, Up and Down to the next row, staying near the same column; Home and End go to the ends of a row), and they follow what you see, so it works when the board is flipped for Light. Enter or Space still chooses a piece and a square, and Escape still puts a piece back. The squares are no longer switched off while the computer moves (they are marked unavailable instead, and clicks and keys are ignored), so your place on the board is kept through every move. Every square keeps its spoken label, and the focus ring colours are unchanged. The <a href="/help">help page</a> describes keyboard play.</p>
+      <p><strong>Tests:</strong> new Playwright tests in <code>test/e2e/keyboard.spec.js</code> check the board is one Tab stop reached in a few presses, arrow and Home/End movement, a whole move made by keyboard alone, Escape, focus staying on the board during the computer's move, and the flipped board.</p>
+    </li>
     <li>
       <div class="changelog-meta"><span class="changelog-build">2026.10.22.002</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">22 Oct 2026</span></div>
       <p>Fixed the live game not responding to clicks, and brought the site up to the standard MediaWright setup.</p>
