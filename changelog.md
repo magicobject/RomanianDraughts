@@ -1,5 +1,10 @@
 # Changelog
 
+## build-2026.10.22.004 (22 Oct 2026, Greg Wright)
+The computer's thinking on Hard no longer freezes the page. The search ran on the page's main thread for up to about 1.8 seconds (longer on a phone), so nothing could be clicked, focused or scrolled meanwhile. It now runs in a Web Worker, `/js/ai-worker.js` (the engine plus a small message handler, built by `build.js` and linked with a content hash like the other scripts), and the page just shows "Computer is thinking�". The rules are untouched: the worker runs the same `src/engine.js`. If a worker cannot be created the search falls back to the old way on the main thread, a search abandoned by starting a new game is stopped, and a late reply for an old game is still dropped.
+
+**CSP:** unchanged (`script-src 'self'`; workers fall back to it), and the browser console is clean under `wrangler dev`. **Tests:** a browser test checks the main thread is never blocked for 150ms while Hard thinks and that the computer still replies, another covers the no-Worker fallback, and the build tests check the worker file and its hashed address. The [help page](help.html) now says the page stays usable while Hard thinks. The game is on [the play page](index.html).
+
 ## build-2026.10.22.003 (22 Oct 2026, Greg Wright)
 Made the board properly usable from the keyboard. Before, all 32 playable squares were separate Tab stops (about 25 presses to reach your first piece), there were no arrow keys, and against the computer every square was switched off while it thought, so keyboard and screen-reader users lost their place after every move.
 

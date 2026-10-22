@@ -67,6 +67,12 @@ describe('every page is a proper document', () => {
     assert.ok(html.includes(`/css/style.css?v=${h(files['css/style.css'])}`));
     assert.ok(html.includes(`/js/engine.js?v=${h(files['js/engine.js'])}`));
     assert.ok(html.includes(`/js/game.js?v=${h(files['js/game.js'])}`));
+    assert.ok(html.includes(`data-worker="/js/ai-worker.js?v=${h(files['js/ai-worker.js'])}"`));
+  });
+  test('the worker file is the engine plus its message handler, and is only in the build output once', () => {
+    const w = files['js/ai-worker.js'];
+    assert.ok(w.includes('const RD = (() =>') && w.includes('self.onmessage') && !w.includes('module.exports'));
+    assert.ok(!files['index.html'].includes('<script src="/js/ai-worker.js'), 'the page must not load the worker as a script');
   });
 });
 
