@@ -1,5 +1,6 @@
 #!/bin/sh
-# Run the full test suite and the dependency audit before anything is pushed.
+# Run the full test suites and the dependency audit before anything is pushed.
 set -e
 npm test
+npm run test:e2e
 npm run audit

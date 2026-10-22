@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Site updates - Romanian Draughts</title>
+<meta name="description" content="Every build of this site and what changed.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://romaniandraughts.mediawright.uk/updates">
+<meta property="og:url" content="https://romaniandraughts.mediawright.uk/updates">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Romanian Draughts">
+<meta property="og:title" content="Site updates - Romanian Draughts">
+<meta property="og:description" content="Every build of this site and what changed.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="/css/style.css?v=9972bcd220">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="wrap">
+<header>
+  <p class="brand"><a href="/">Romanian Draughts</a></p>
+</header>
+<div class="band" aria-hidden="true"></div>
+<main id="main" class="doc">
+  <h1>Site updates</h1>
+  <p class="lede">Every build of this site and what changed, newest first. This page is not linked from the game and is kept out of search engines.</p>
+  <p class="build-number">Current build: 2026.10.22.002</p>
+  <ul class="changelog">
+    <li>
+      <div class="changelog-meta"><span class="changelog-build">2026.10.22.002</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">22 Oct 2026</span></div>
+      <p>Fixed the live game not responding to clicks, and brought the site up to the standard MediaWright setup.</p>
+      <p><strong>Cause:</strong> the page had no <code>&lt;meta charset&gt;</code>, so the browser misread the game script, its Content-Security-Policy hash stopped matching, and the browser blocked the script: the board stayed empty. The page is now a proper document (doctype, language, charset, viewport) and the scripts and styles are separate files (<code>/js/engine.js</code>, <code>/js/game.js</code>, <code>/css/style.css</code>, each with a content hash in its address), so the CSP is now just <code>script-src 'self'</code> with no per-script hashes to go stale.</p>
+      <p><strong>Also fixed while testing in a real browser:</strong> the board squares grew to 150px and covered the controls once the page was in standards mode (grid tracks are now <code>minmax(0, 1fr)</code>); the pieces were stretched into ovals for the same reason (they are now sized with <code>aspect-ratio</code>); Undo stayed greyed out after the first move; the 32 unplayable light squares were unlabelled buttons and the board used a <code>grid</code> role without rows (axe now finds no violations).</p>
+      <p><strong>New:</strong> a footer on every page marking it as a MediaWright site, with links to <a href="/help">Help</a> and <a href="/updates">Site updates</a>; a plain-English <a href="/help">help page</a>; this <a href="/updates">updates page</a>, generated from <code>changelog.md</code>; a styled <a href="/404.html">404 page</a>; favicons (SVG, PNG, Apple touch icon and <code>favicon.ico</code>, made by <code>scripts/generate-favicons.js</code>); <code>sitemap.xml</code>, <code>robots.txt</code> and <code>/.well-known/security.txt</code>; page descriptions, canonical addresses and social tags.</p>
+      <p><strong>Tests:</strong> <code>npm run test:e2e</code> runs Playwright against <code>wrangler dev</code> (real clicks under the production CSP, axe scans of every page in light and dark mode and with a piece selected, heading order, security headers, 404, sitemap, robots, security.txt), and the Node tests now also check the page shell, sitemap, security.txt expiry and that <code>/updates</code> matches this changelog. The game is on <a href="/">the play page</a>.</p>
+    </li>
+    <li>
+      <div class="changelog-meta"><span class="changelog-build">2026.10.22.001</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">22 Oct 2026</span></div>
+      <p>Fixed the PR gate's clone step in <code>claude-pr-automerge.yml</code>. It sent a <code>bearer</code> header, which GitHub rejects for git over HTTPS (<code>could not read Username</code>), so the gate failed before running any tests on both earlier PRs. It now sends Basic auth with <code>x-access-token</code>, the same as <code>actions/checkout</code>, and masks the encoded value in the log.</p>
+    </li>
+    <li>
+      <div class="changelog-meta"><span class="changelog-build">2026.10.21.003</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">21 Oct 2026</span></div>
+      <p>Added the Cloudflare Worker config. <code>wrangler.jsonc</code> serves only <code>public/</code> (worker name <code>romaniandraughts</code>, <code>not_found_handling: &quot;404-page&quot;</code>). The build now writes <code>public/index.html</code> and <code>public/_headers</code> (CSP with a hash for each inline script, plus nosniff, frame, referrer, permissions and HSTS headers) and there is a <a href="/404.html">public/404.html</a>. The old root <code>index.html</code> is gone. Tests grew to 69, covering the CSP hashes, the config and the 404 guard. Checked under <code>wrangler dev</code>: correct headers, custom 404, no CSP errors in the console (only a missing favicon).</p>
+    </li>
+    <li>
+      <div class="changelog-meta"><span class="changelog-build">2026.10.21.002</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">21 Oct 2026</span></div>
+      <p>Added the branch-and-PR workflow: <code>claude-pr-automerge.yml</code> re-runs the tests and audit on every <code>claude/*</code> PR, set to the cautious <code>careful</code> level so only green <code>risk:simple</code> PRs merge themselves. Documented in <code>CLAUDE.md</code>.</p>
+    </li>
+    <li>
+      <div class="changelog-meta"><span class="changelog-build">2026.10.21.001</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">21 Oct 2026</span></div>
+      <p>Added the standard repo setup and a proper test suite. 58 tests now cover the starting position, steps, jumps (own and enemy pieces, chains, optional capture, no double captures or landings), <code>applyMove</code>, win detection, the computer opponent at all three levels, a self-play game, and a check that <a href="/">index.html</a> matches what <code>build.js</code> produces. Added <code>package.json</code> (<code>npm test</code>, <code>npm run build</code>, <code>npm run audit</code>), a pre-push hook that runs tests and audit, <code>.gitattributes</code> pinning LF, <code>CLAUDE.md</code>, and this changelog. Replaced the old single-file <code>test/engine.test.js</code>.</p>
+    </li>
+    <li>
+      <div class="changelog-meta"><span class="changelog-build">2026.10.21.000</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">21 Oct 2026</span></div>
+      <p>First commit: engine, game page, rules and the original test script.</p>
+    </li>
+  </ul>
+</main>
+<footer class="site">
+  <nav aria-label="Site">
+    <ul>
+      <li><a href="/">Play</a></li>
+      <li><a href="/help">Help</a></li>
+      <li><a href="/updates">Site updates</a></li>
+      <li><a href="/.well-known/security.txt">Security policy</a></li>
+    </ul>
+  </nav>
+  <p>A <a href="https://mediawright.uk">MediaWright</a> site: built and looked after by mediawright.uk.</p>
+</footer>
+</div>
+</body>
+</html>

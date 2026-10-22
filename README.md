@@ -6,22 +6,26 @@ Full rules: [docs/RULES.md](docs/RULES.md)
 
 ## Play
 
-Live: https://romaniandraughts.magicobject.workers.dev/
+Live: https://romaniandraughts.mediawright.uk/ (a MediaWright site). Help for players: /help. Build history: /updates.
 
-Locally, open `public/index.html` in any modern browser (self-contained, no server needed), or run it exactly as production serves it, with its security headers, using `npx wrangler dev`.
+Run it exactly as production serves it, with its security headers, using `npx wrangler dev` (after `npm install` and `npm run build`).
 
 ## Layout
 
 | Path | What it is |
 | --- | --- |
-| `public/index.html` | The playable game (engine inlined into the page). Generated |
-| `public/_headers` | Security headers and CSP, with script hashes filled in. Generated |
-| `public/404.html` | The not-found page |
+| `public/index.html`, `help.html`, `updates.html`, `404.html` | The pages. Generated |
+| `public/css/style.css`, `public/js/engine.js`, `public/js/game.js` | Styles and scripts, copied from `src/`. Generated |
+| `public/sitemap.xml`, `public/_headers` | Sitemap and security headers (CSP). Generated |
+| `public/robots.txt`, `public/.well-known/security.txt` | Hand-written. Renew security.txt's `Expires` yearly |
+| `public/favicon*`, `public/apple-touch-icon.png` | From `scripts/generate-favicons.js` |
 | `wrangler.jsonc` | Cloudflare Worker config (static assets from `public/`) |
-| `src/_headers.template` | Source of `public/_headers` |
 | `src/engine.js` | Rules engine and computer opponent; works in the browser and Node |
-| `src/page.template.html` | The page source, with `/*@ENGINE@*/` where the engine is inlined |
-| `test/*.test.js` | Rule, computer-opponent and build tests (`npm test`) |
+| `src/game.js`, `src/style.css`, `src/page.template.html` | The game's script, styles and page body |
+| `src/shell.html`, `src/pages/` | The shared page shell (head, footer) and the other pages' bodies |
+| `changelog.md`, `build-number.json` | The build history shown on /updates |
+| `test/*.test.js` | Rule, computer-opponent, build and site tests (`npm test`) |
+| `test/e2e/` | Browser tests: real clicks, accessibility, headers (`npm run test:e2e`) |
 | `docs/RULES.md` | The rules |
 
 ## Rebuild `public/` after editing
@@ -33,7 +37,9 @@ npm run build
 ## Test
 
 ```sh
-npm test
+npm test            # rules, computer opponent, build output, site files (fast)
+npm run test:e2e    # real browser against wrangler dev: clicks, accessibility, headers (needs: npx playwright install chromium)
+npm run audit
 ```
 
 ## Engine API (`RD`)
