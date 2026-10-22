@@ -1,5 +1,12 @@
 # Changelog
 
+## build-2026.10.22.003 (22 Oct 2026, Greg Wright)
+Made the board properly usable from the keyboard. Before, all 32 playable squares were separate Tab stops (about 25 presses to reach your first piece), there were no arrow keys, and against the computer every square was switched off while it thought, so keyboard and screen-reader users lost their place after every move.
+
+**Now:** the board is a single Tab stop. Arrow keys move between the playable squares (Left and Right along a row, Up and Down to the next row, staying near the same column; Home and End go to the ends of a row), and they follow what you see, so it works when the board is flipped for Light. Enter or Space still chooses a piece and a square, and Escape still puts a piece back. The squares are no longer switched off while the computer moves (they are marked unavailable instead, and clicks and keys are ignored), so your place on the board is kept through every move. Every square keeps its spoken label, and the focus ring colours are unchanged. The [help page](help.html) describes keyboard play.
+
+**Tests:** new Playwright tests in `test/e2e/keyboard.spec.js` check the board is one Tab stop reached in a few presses, arrow and Home/End movement, a whole move made by keyboard alone, Escape, focus staying on the board during the computer's move, and the flipped board.
+
 ## build-2026.10.22.002 (22 Oct 2026, Greg Wright)
 Fixed the live game not responding to clicks, and brought the site up to the standard MediaWright setup.
 
