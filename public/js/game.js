@@ -16,6 +16,7 @@
   }
   let sel = null;   // {from, cur, path, caps}
   let busy = false; // computer thinking or animating
+  let gen = 0;      // bumped by every new game, so a computer move from an old game is dropped
   let anim = null;  // {board, at} temporary display
 
   const B = () => Int8Array.from(S.board);
@@ -198,20 +199,23 @@
 
   $('finishBtn').addEventListener('click', () => { if (sel && sel.path.length > 1) commit({ path: sel.path, caps: sel.caps }); });
   $('cancelBtn').addEventListener('click', () => { sel = null; render(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && sel && !busy) { sel = null; render(); } });
 
   // ---------- Computer ----------
   const reduced = !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   function maybeAI() {
     if (!isAITurn()) return;
     busy = true; render();
-    const side = S.side, token = S.history.length;
+    const side = S.side, token = S.history.length, myGen = gen;
     setTimeout(() => {
+      if (gen !== myGen) return;
       const m = RD.chooseMove(B(), side, S.settings.level);
       if (!m || S.history.length !== token) { busy = false; render(); return; }
       // animate hop by hop
       const base = S.board.slice();
       let k = 0;
       const stepAnim = () => {
+        if (gen !== myGen) return;
         k++;
         const b2 = base.slice();
         b2[m.path[0]] = 0; b2[m.path[k]] = side;
@@ -220,7 +224,7 @@
         anim = { board: b2, at: m.path[k], ghosts };
         render();
         if (k < m.path.length - 1) setTimeout(stepAnim, reduced ? 60 : 380);
-        else setTimeout(() => { anim = null; busy = false; commit(m); }, reduced ? 60 : 380);
+        else setTimeout(() => { if (gen !== myGen) return; anim = null; busy = false; commit(m); }, reduced ? 60 : 380);
       };
       stepAnim();
     }, 300);
@@ -243,7 +247,7 @@
     S.winner = 0; S.winText = '';
     render();
   });
-  function newGame(settings) { S = fresh(settings); sel = null; anim = null; busy = false; render(); maybeAI(); }
+  function newGame(settings) { gen++; S = fresh(settings); sel = null; anim = null; busy = false; render(); maybeAI(); }
   $('newBtn').addEventListener('click', () => newGame({ ...S.settings }));
   document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
     if (S.settings.mode === b.dataset.mode) return;

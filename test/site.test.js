@@ -2,7 +2,7 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const { build, parseChangelog, PAGES, SITE } = require('../build.js');
+const { build, parseChangelog, inline, PAGES, SITE } = require('../build.js');
 
 const root = path.join(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n');
@@ -95,6 +95,15 @@ describe('/updates and the changelog', () => {
     assert.ok(!text.includes('**'), 'raw ** left on /updates');
     assert.ok(!/`/.test(text), 'raw backtick left on /updates');
     assert.ok(!/\]\(/.test(text), 'raw markdown link left on /updates');
+  });
+  test('hostile changelog text cannot inject markup or odd links', () => {
+    assert.ok(!/<(img|b|i|script)/i.test(inline('<img src=x onerror=alert(1)> <script>x</script> `<b>` **<i>**')));
+    for (const bad of ['javascript:alert(1)', 'JAVASCRIPT:alert(1)', 'data:text/html,x', '__proto__', 'constructor', 'toString']) {
+      const out = inline(`[x](${bad})`);
+      assert.ok(out.startsWith('<code>x</code>') && !out.includes('<a '), bad + ' -> ' + out);
+    }
+    const out = inline('[x](https://a"><script>alert(1)</script>)');
+    assert.ok(!out.includes('<script') && !/href="[^"]*"[^>]*"/.test(out.replace(/&quot;/g, '')), out);
   });
   test('markup in the changelog is escaped', () => {
     assert.ok(!/<script/i.test(files['updates.html']));

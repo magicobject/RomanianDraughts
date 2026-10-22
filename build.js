@@ -34,7 +34,7 @@ function inline(text) {
     if (m[3] !== undefined) out += `<code>${esc(m[3])}</code>`;
     else if (m[4] !== undefined) out += `<strong>${esc(m[4])}</strong>`;
     else if (/^https?:\/\//.test(m[2])) out += `<a href="${esc(m[2])}">${esc(m[1])}</a>`;
-    else if (LINKABLE[m[2]]) out += `<a href="${LINKABLE[m[2]]}">${esc(m[1])}</a>`;
+    else if (Object.hasOwn(LINKABLE, m[2])) out += `<a href="${LINKABLE[m[2]]}">${esc(m[1])}</a>`;
     else out += `<code>${esc(m[1])}</code>`; // a repo file that is not a page of the site: named, not linked
   }
   return out + esc(text.slice(last));
@@ -109,4 +109,4 @@ if (require.main === module) {
   console.log(`Wrote ${Object.keys(files).length} files into public/`);
 }
 
-module.exports = { build, parseChangelog, PAGES, SITE };
+module.exports = { build, parseChangelog, inline, PAGES, SITE };
