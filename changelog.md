@@ -1,5 +1,16 @@
 # Changelog
 
+## build-2026.10.22.002 (22 Oct 2026, Greg Wright)
+Fixed the live game not responding to clicks, and brought the site up to the standard MediaWright setup.
+
+**Cause:** the page had no `<meta charset>`, so the browser misread the game script, its Content-Security-Policy hash stopped matching, and the browser blocked the script: the board stayed empty. The page is now a proper document (doctype, language, charset, viewport) and the scripts and styles are separate files (`/js/engine.js`, `/js/game.js`, `/css/style.css`, each with a content hash in its address), so the CSP is now just `script-src 'self'` with no per-script hashes to go stale.
+
+**Also fixed while testing in a real browser:** the board squares grew to 150px and covered the controls once the page was in standards mode (grid tracks are now `minmax(0, 1fr)`); the pieces were stretched into ovals for the same reason (they are now sized with `aspect-ratio`); Undo stayed greyed out after the first move; the 32 unplayable light squares were unlabelled buttons and the board used a `grid` role without rows (axe now finds no violations). An independent test pass then found and we fixed: Finish move/Cancel and the computer options were always showing (the `hidden` attribute was being overridden by CSS); starting a new game, or switching mode, while the computer was moving let its old move land in the new game; the "wins" heading and the keyboard focus rings were too low-contrast (now computed and pinned by a test); the Rules summary was under the 24px minimum target; and with JavaScript off the page now says the game needs it. Escape now cancels a selected piece.
+
+**New:** a footer on every page marking it as a MediaWright site, with links to [Help](help.html) and [Site updates](updates.html); a plain-English [help page](help.html); this [updates page](updates.html), generated from `changelog.md`; a styled [404 page](404.html); favicons (SVG, PNG, Apple touch icon and `favicon.ico`, made by `scripts/generate-favicons.js`); `sitemap.xml`, `robots.txt` and `/.well-known/security.txt`; page descriptions, canonical addresses and social tags.
+
+**Tests:** `npm run test:e2e` runs Playwright against `wrangler dev` (real clicks under the production CSP, axe scans of every page in light and dark mode and with a piece selected, heading order, security headers, 404, sitemap, robots, security.txt), and the Node tests now also check the page shell, sitemap, security.txt expiry and that `/updates` matches this changelog. The game is on [the play page](index.html).
+
 ## build-2026.10.22.001 (22 Oct 2026, Greg Wright)
 Fixed the PR gate's clone step in [claude-pr-automerge.yml](.github/workflows/claude-pr-automerge.yml). It sent a `bearer` header, which GitHub rejects for git over HTTPS (`could not read Username`), so the gate failed before running any tests on both earlier PRs. It now sends Basic auth with `x-access-token`, the same as `actions/checkout`, and masks the encoded value in the log.
 
