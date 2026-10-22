@@ -30,8 +30,13 @@
 <main id="main" class="doc">
   <h1>Site updates</h1>
   <p class="lede">Every build of this site and what changed, newest first. This page is not linked from the game and is kept out of search engines.</p>
-  <p class="build-number">Current build: 2026.10.22.002</p>
+  <p class="build-number">Current build: 2026.10.22.003</p>
   <ul class="changelog">
+    <li>
+      <div class="changelog-meta"><span class="changelog-build">2026.10.22.003</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">22 Oct 2026</span></div>
+      <p>The computer's thinking on Hard no longer freezes the page. The search ran on the page's main thread for up to about 1.8 seconds (longer on a phone), so nothing could be clicked, focused or scrolled meanwhile. It now runs in a Web Worker, <code>/js/ai-worker.js</code> (the engine plus a small message handler, built by <code>build.js</code> and linked with a content hash like the other scripts), and the page just shows &quot;Computer is thinking�&quot;. The rules are untouched: the worker runs the same <code>src/engine.js</code>. If a worker cannot be created the search falls back to the old way on the main thread, a search abandoned by starting a new game is stopped, and a late reply for an old game is still dropped.</p>
+      <p><strong>CSP:</strong> unchanged (<code>script-src 'self'</code>; workers fall back to it), and the browser console is clean under <code>wrangler dev</code>. <strong>Tests:</strong> a browser test checks the main thread is never blocked for 150ms while Hard thinks and that the computer still replies, another covers the no-Worker fallback, and the build tests check the worker file and its hashed address. The <a href="/help">help page</a> now says the page stays usable while Hard thinks. The game is on <a href="/">the play page</a>.</p>
+    </li>
     <li>
       <div class="changelog-meta"><span class="changelog-build">2026.10.22.002</span><span class="changelog-author">Greg Wright</span><span class="changelog-date">22 Oct 2026</span></div>
       <p>Fixed the live game not responding to clicks, and brought the site up to the standard MediaWright setup.</p>

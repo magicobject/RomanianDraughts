@@ -203,31 +203,56 @@
 
   // ---------- Computer ----------
   const reduced = !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  // The search runs in a Web Worker (public/js/ai-worker.js) so the page stays responsive; if a worker cannot be made it runs here.
+  const workerUrl = document.currentScript?.dataset.worker;
+  let worker = null, aiReq = 0, aiDone = null;
+  function startWorker() {
+    try {
+      worker = new Worker(workerUrl);
+      worker.onmessage = e => { if (aiDone && e.data.id === aiReq) { const d = aiDone; aiDone = null; d(e.data.move); } };
+      worker.onerror = () => { worker = null; if (aiDone) { const d = aiDone; aiDone = null; d(undefined); } };
+    } catch (err) { worker = null; }
+  }
+  if (workerUrl && window.Worker) startWorker();
+  function searchMove(side, done) {
+    const ask = () => {
+      if (!worker) return setTimeout(() => done(RD.chooseMove(B(), side, S.settings.level)), 0);
+      if (aiDone) { worker.terminate(); startWorker(); if (!worker) return ask(); } // an abandoned search (new game) is still running: drop it
+      aiDone = m => m === undefined ? ask() : done(m); // undefined = the worker failed: search here instead
+      worker.postMessage({ id: ++aiReq, board: B(), side, level: S.settings.level });
+    };
+    ask();
+  }
   function maybeAI() {
     if (!isAITurn()) return;
     busy = true; render();
     const side = S.side, token = S.history.length, myGen = gen;
     setTimeout(() => {
       if (gen !== myGen) return;
-      const m = RD.chooseMove(B(), side, S.settings.level);
-      if (!m || S.history.length !== token) { busy = false; render(); return; }
-      // animate hop by hop
-      const base = S.board.slice();
-      let k = 0;
-      const stepAnim = () => {
+      searchMove(side, m => {
         if (gen !== myGen) return;
-        k++;
-        const b2 = base.slice();
-        b2[m.path[0]] = 0; b2[m.path[k]] = side;
-        const ghosts = [];
-        for (let j = 1; j <= k; j++) { const over = (m.path[j] + m.path[j - 1]) / 2; if (m.caps.includes(over)) ghosts.push(over); }
-        anim = { board: b2, at: m.path[k], ghosts };
-        render();
-        if (k < m.path.length - 1) setTimeout(stepAnim, reduced ? 60 : 380);
-        else setTimeout(() => { if (gen !== myGen) return; anim = null; busy = false; commit(m); }, reduced ? 60 : 380);
-      };
-      stepAnim();
+        if (!m || S.history.length !== token) { busy = false; render(); return; }
+        playMove(m, side, myGen);
+      });
     }, 300);
+  }
+  function playMove(m, side, myGen) {
+    // animate hop by hop
+    const base = S.board.slice();
+    let k = 0;
+    const stepAnim = () => {
+      if (gen !== myGen) return;
+      k++;
+      const b2 = base.slice();
+      b2[m.path[0]] = 0; b2[m.path[k]] = side;
+      const ghosts = [];
+      for (let j = 1; j <= k; j++) { const over = (m.path[j] + m.path[j - 1]) / 2; if (m.caps.includes(over)) ghosts.push(over); }
+      anim = { board: b2, at: m.path[k], ghosts };
+      render();
+      if (k < m.path.length - 1) setTimeout(stepAnim, reduced ? 60 : 380);
+      else setTimeout(() => { if (gen !== myGen) return; anim = null; busy = false; commit(m); }, reduced ? 60 : 380);
+    };
+    stepAnim();
   }
 
   // ---------- Controls ----------

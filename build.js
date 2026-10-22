@@ -1,6 +1,6 @@
 // Builds the deployable site into public/ (see CLAUDE.md "Layout" for what is generated and what is hand-written):
 //   public/index.html, help.html, updates.html, 404.html  - src/shell.html around the page bodies
-//   public/css/style.css, public/js/engine.js, public/js/game.js - from src/ (the pages link them with ?v=<content hash>)
+//   public/css/style.css, public/js/engine.js, game.js, ai-worker.js - from src/ (the pages link them with ?v=<content hash>)
 //   public/sitemap.xml  - every indexable page
 //   public/_headers     - src/_headers.template
 // Hand-written and left alone: public/robots.txt, public/.well-known/security.txt, the favicon files
@@ -83,10 +83,13 @@ function build() {
   const engine = read('src/engine.js').replace("if (typeof module !== 'undefined') module.exports = RD;", '');
   files['js/engine.js'] = engine;
   files['js/game.js'] = read('src/game.js');
+  files['js/ai-worker.js'] = engine + '\n' + read('src/ai-worker.js'); // the engine plus the worker's message handler
   files['css/style.css'] = read('src/style.css');
 
   const shell = read('src/shell.html');
-  const gameScripts = ['engine', 'game'].map(n => `<script src="/js/${n}.js?v=${hash(files[`js/${n}.js`])}"></script>\n`).join('');
+  const src = n => `/js/${n}.js?v=${hash(files[`js/${n}.js`])}`;
+  // game.js finds the worker's hashed address through data-worker on its own tag
+  const gameScripts = `<script src="${src('engine')}"></script>\n<script src="${src('game')}" data-worker="${src('ai-worker')}"></script>\n`;
   for (const page of PAGES) {
     const body = page.game ? read('src/page.template.html') : page.body ? read(page.body) : updatesBody();
     const html = render(shell, page, body, page.game ? gameScripts : '');
