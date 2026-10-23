@@ -1,5 +1,12 @@
 # Changelog
 
+## build-2026.10.23.001 (23 Oct 2026, Greg Wright)
+Wrote the design for online play, before any code: how players will sign in and invite each other to a game. Nothing on the live site changes. The design is two documents, [online-play.md](docs/specs/online-play.md) (the decisions, the behaviour, 46 numbered acceptance criteria, the data kept and for how long, and the order to build it in) and [online-play-threat-model.md](docs/specs/online-play-threat-model.md) (31 threats and how each is handled).
+
+**The main choices:** sign in with an emailed one-time code, with no passwords; for ages 13 and over, using a neutral age question; invitations are links the player shares themselves, so the site never emails a stranger; no chat or typed text between players, and the server picks each display name; the first release is correspondence play, where moves are stored and the page checks for new ones, with no live connection; games can also end in a draw by threefold repetition or 50 moves each without a capture. The only email address kept is a keyed hash, with no readable copy. A reported player's hash is kept for 12 months so a suspension still works if they delete their account first; this was agreed with Greg.
+
+**Reviews:** a security architect reviewed the design twice and an independent architect argued against it; their findings are built into the documents. The design is not yet approved to build: a data protection impact assessment, a children's code assessment, the Online Safety Act scope check and a privacy notice still have to be written first. A new `docs/specs/` folder holds the documents.
+
 ## build-2026.10.22.004 (22 Oct 2026, Greg Wright)
 The computer's thinking on Hard no longer freezes the page. The search ran on the page's main thread for up to about 1.8 seconds (longer on a phone), so nothing could be clicked, focused or scrolled meanwhile. It now runs in a Web Worker, `/js/ai-worker.js` (the engine plus a small message handler, built by `build.js` and linked with a content hash like the other scripts), and the page just shows "Computer is thinking�". The rules are untouched: the worker runs the same `src/engine.js`. If a worker cannot be created the search falls back to the old way on the main thread, a search abandoned by starting a new game is stopped, and a late reply for an old game is still dropped.
 
