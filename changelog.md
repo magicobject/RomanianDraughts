@@ -1,5 +1,8 @@
 # Changelog
 
+## build-2026.10.23.002 (23 Oct 2026, Greg Wright)
+Fixed the failing security audit. A new advisory in `undici` (pulled in by the dev tool `wrangler`) made `npm run audit` fail. Updated [package-lock.json](package-lock.json) with `npm audit fix`; no site code changed and the audit now reports 0 vulnerabilities.
+
 ## build-2026.10.23.001 (23 Oct 2026, Greg Wright)
 Wrote the design for online play, before any code: how players will sign in and invite each other to a game. Nothing on the live site changes. The design is two documents, [online-play.md](docs/specs/online-play.md) (the decisions, the behaviour, 46 numbered acceptance criteria, the data kept and for how long, and the order to build it in) and [online-play-threat-model.md](docs/specs/online-play-threat-model.md) (31 threats and how each is handled).
 
