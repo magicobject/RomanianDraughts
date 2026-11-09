@@ -1,5 +1,8 @@
 # Changelog
 
+## build-2026.10.23.003 (23 Oct 2026, Greg Wright)
+The computer's strength is now a level from 1 to 10 instead of Easy, Medium and Hard. Higher levels search deeper, think longer and make fewer random slips; the default is 5. Changed in [engine.js](src/engine.js), the strength buttons on [the game page](/) and [the help page](/help). The old names still work in the engine (easy = 2, medium = 5, hard = 9). The AI tests now cover levels 1, 3, 5, 7 and 10.
+
 ## build-2026.10.23.002 (23 Oct 2026, Greg Wright)
 Fixed the failing security audit. A new advisory in `undici` (pulled in by the dev tool `wrangler`) made `npm run audit` fail. Updated [package-lock.json](package-lock.json) with `npm audit fix`; no site code changed and the audit now reports 0 vulnerabilities.
 

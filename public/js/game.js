@@ -6,7 +6,7 @@
   let S; // game state
   function fresh(settings) {
     return {
-      settings: settings || { mode: 'ai', you: 1, level: 'medium' },
+      settings: settings || { mode: 'ai', you: 1, level: 5 },
       history: [], // {board:Array, side, notation, last:[from,to]}
       board: Array.from(RD.initialBoard()),
       side: 1,
@@ -153,7 +153,7 @@
     $('aiOpts').hidden = m !== 'ai';
     $('youDark').setAttribute('aria-pressed', S.settings.you === 1);
     $('youLight').setAttribute('aria-pressed', S.settings.you === -1);
-    for (const [id, lv] of [['lvlEasy', 'easy'], ['lvlMed', 'medium'], ['lvlHard', 'hard']]) $(id).setAttribute('aria-pressed', S.settings.level === lv);
+    document.querySelectorAll('[data-level]').forEach(b => b.setAttribute('aria-pressed', S.settings.level === Number(b.dataset.level)));
     $('undoBtn').disabled = busy || undoTarget() === null; // index 0 (the first move) is a valid target
 
     // tally
@@ -320,7 +320,7 @@
     newGame({ ...S.settings, you });
   }));
   document.querySelectorAll('[data-level]').forEach(b => b.addEventListener('click', () => {
-    S.settings.level = b.dataset.level; render();
+    S.settings.level = Number(b.dataset.level); render();
   }));
 
   // ---------- Start ----------
