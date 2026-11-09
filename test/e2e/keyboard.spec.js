@@ -91,7 +91,7 @@ test('Escape cancels a selection made with the keyboard and focus stays on the b
 test('against the computer, focus stays on the board through its move, and the squares ignore input meanwhile', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Computer' }).click();
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: '1', exact: true }).click();
   const [from, to] = await page.evaluate(() => RD.allMoves(RD.initialBoard(), 1).find(m => m.path.length === 2 && m.caps.length === 0).path);
   await page.locator(`.sq[data-i="${from}"]`).focus();
   await page.keyboard.press('Enter');
@@ -113,7 +113,7 @@ test('against the computer, focus stays on the board through its move, and the s
 test('when playing Light the board is flipped and arrows still follow the screen', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Computer' }).click();
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: '1', exact: true }).click();
   await page.getByRole('button', { name: /^Light/ }).click();
   await expect(page.locator('#status')).toContainText(/your move/i, { timeout: 15_000 });
   await focusBoard(page);

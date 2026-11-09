@@ -24,7 +24,7 @@ test('a visitor can move a piece with the mouse (two players)', async ({ page })
 test('the computer replies after the visitor moves', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Computer' }).click();
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: '1', exact: true }).click();
   const step = await page.evaluate(() => RD.allMoves(RD.initialBoard(), 1).find(m => m.path.length === 2 && m.caps.length === 0).path);
   await page.locator(`.sq[data-i="${step[0]}"]`).click();
   await page.locator(`.sq[data-i="${step[1]}"]`).click();
@@ -81,7 +81,7 @@ test('New game, mode and side switches during the computer\'s move start a clean
   for (const reset of [() => page.getByRole('button', { name: 'New game' }).click(), () => page.getByRole('button', { name: 'Two players' }).click()]) { // (switching side is left out: playing Light legitimately makes the computer move first)
     await page.goto('/');
     await page.getByRole('button', { name: 'Computer' }).click();
-    await page.getByRole('button', { name: 'Easy' }).click();
+    await page.getByRole('button', { name: '1', exact: true }).click();
     const step = await page.evaluate(() => RD.allMoves(RD.initialBoard(), 1).find(m => m.path.length === 2 && m.caps.length === 0).path);
     await page.locator(`.sq[data-i="${step[0]}"]`).click();
     await page.locator(`.sq[data-i="${step[1]}"]`).click();
@@ -122,10 +122,10 @@ test('small controls are at least 24px tall and wide on a phone (WCAG 2.5.8)', a
   }
 });
 
-test('on Hard the page stays responsive while the computer thinks, and the computer still replies', async ({ page }) => {
+test('at level 10 the page stays responsive while the computer thinks, and the computer still replies', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Computer' }).click();
-  await page.getByRole('button', { name: 'Hard' }).click();
+  await page.getByRole('button', { name: '10', exact: true }).click();
   await page.evaluate(() => {
     window.__gap = 0;
     let last = performance.now();
@@ -145,7 +145,7 @@ test('if Web Workers are unavailable the computer still replies (main-thread fal
   await page.addInitScript(() => { delete window.Worker; });
   await page.goto('/');
   await page.getByRole('button', { name: 'Computer' }).click();
-  await page.getByRole('button', { name: 'Easy' }).click();
+  await page.getByRole('button', { name: '1', exact: true }).click();
   const step = await page.evaluate(() => RD.allMoves(RD.initialBoard(), 1).find(m => m.path.length === 2 && m.caps.length === 0).path);
   await page.locator(`.sq[data-i="${step[0]}"]`).click();
   await page.locator(`.sq[data-i="${step[1]}"]`).click();
