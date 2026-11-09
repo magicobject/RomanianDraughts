@@ -1,6 +1,6 @@
 # Romanian Draughts
 
-A browser game of Romanian Draughts: an all-kings draughts variant, 8 kings a side, where pieces may jump their own men as well as the opponent's and captures are optional. Play two players on one screen, or against the computer (easy, medium, hard).
+A browser game of Romanian Draughts: an all-kings draughts variant, 8 kings a side, where pieces may jump their own men as well as the opponent's and captures are optional. Play two players on one screen, or against the computer (strength 1 to 10).
 
 Full rules: [docs/RULES.md](docs/RULES.md)
 
@@ -48,7 +48,7 @@ npm run audit
 - `allMoves(board, side)` → `[{ path: [from, ..., to], caps: [squares] }]`, every step and every jump chain including stops part-way.
 - `applyMove(board, move)` → new board.
 - `winnerAfter(board, mover)` → winning side or `0`.
-- `chooseMove(board, side, 'easy'|'medium'|'hard')` → computer move (iterative-deepening alpha-beta with a time limit).
+- `chooseMove(board, side, level)` where level is 1 (weakest) to 10 (strongest), default 5; the old `'easy'|'medium'|'hard'` still work. → computer move (iterative-deepening alpha-beta with a time limit).
 
 ## Rule decisions in the code
 

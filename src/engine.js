@@ -136,11 +136,23 @@ const RD = (() => {
     return best;
   }
 
-  // level: 'easy' | 'medium' | 'hard'
-  function chooseMove(b, side, level = 'medium') {
+  // Strength levels 1 (weakest) to 10 (strongest): search depth, think time and randomness per level.
+  const LEVELS = {
+    depth: [1, 1, 2, 2, 3, 3, 4, 5, 6, 8],
+    noise: [100, 60, 40, 25, 12, 6, 3, 2, 1, 1],
+  };
+  const LEGACY_LEVELS = { easy: 2, medium: 5, hard: 9 }; // old saved names
+  function normaliseLevel(level) {
+    const n = typeof level === 'string' && level in LEGACY_LEVELS ? LEGACY_LEVELS[level] : Number(level);
+    return Number.isFinite(n) ? Math.min(10, Math.max(1, Math.round(n))) : 5;
+  }
+
+  // level: 1 to 10 (default 5); the old 'easy' | 'medium' | 'hard' still work
+  function chooseMove(b, side, level = 5) {
     const moves = allMoves(b, side);
     if (!moves.length) return null;
-    const cfg = { easy: { max: 1, ms: 300, noise: 60 }, medium: { max: 3, ms: 800, noise: 6 }, hard: { max: 8, ms: 1800, noise: 1 } }[level];
+    const lv = normaliseLevel(level);
+    const cfg = { max: LEVELS.depth[lv - 1], ms: 200 + lv * 160, noise: LEVELS.noise[lv - 1] };
     const ctx = { deadline: Date.now() + cfg.ms, nodes: 0, stop: false };
     let bestMove = moves[0];
     let order = moves.slice().sort((x, y) => y.caps.length - x.caps.length);
@@ -166,6 +178,6 @@ const RD = (() => {
     return bestMove;
   }
 
-  return { initialBoard, stepTargets, jumpTargets, allMoves, hasMove, applyMove, count, winnerAfter, chooseMove };
+  return { initialBoard, stepTargets, jumpTargets, allMoves, hasMove, applyMove, count, winnerAfter, chooseMove, normaliseLevel };
 })();
 if (typeof module !== 'undefined') module.exports = RD;
